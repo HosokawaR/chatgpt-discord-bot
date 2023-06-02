@@ -1,11 +1,11 @@
 import { Client, Message, TextChannel } from "discord.js";
 import { DISCORD_TOKEN } from "./env.js";
 import {
+	getRecentLimitedMessages,
 	MessageTooLongError,
 	TypingSender,
-	getRecentLimitedMessages,
 } from "./utls.js";
-import { takeToChatgpt } from "./chatgpt.js";
+import { talkToChatgpt } from "./chatgpt.js";
 
 const client = new Client({
 	intents: ["Guilds", "GuildMessages", "MessageContent"],
@@ -32,7 +32,7 @@ client.on("messageCreate", async (message: Message) => {
 			message.channel.send(contexts.message);
 			return;
 		}
-		const response = await takeToChatgpt(contexts);
+		const response = await talkToChatgpt(contexts);
 		typingSender.stop();
 		message.channel.send(response);
 	}

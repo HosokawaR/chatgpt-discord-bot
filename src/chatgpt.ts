@@ -23,7 +23,7 @@ const chatgpt = new ChatGPTAPI({
 	},
 });
 
-export const takeToChatgpt = async (
+export const talkToChatgpt = async (
 	contexts: MessageWithRole[],
 ): Promise<string> => {
 	const context = contexts
