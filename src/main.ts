@@ -22,7 +22,6 @@ client.on("messageCreate", async (message: Message) => {
 	if (!(message.channel instanceof TextChannel)) return;
 
 	if (message.mentions.users.has(client.user?.id)) {
-		await message.channel.sendTyping();
 		const typingSender = new TypingSender(message.channel);
 		await typingSender.start();
 		const contexts = await getRecentLimitedMessages(
