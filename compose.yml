@@ -1,0 +1,13 @@
+services:
+  bot:
+    build: .
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - MAX_TOKENS=${MAX_TOKENS}
+      - MODEL=${MODEL}
+      - TOKEN_UNIT_PRICE=${TOKEN_UNIT_PRICE}
+      - EXCHANGE_RATE=${EXCHANGE_RATE}
+      - CURRENCY_UNIT=${CURRENCY_UNIT}
+      - SYSTEM_PROMPT=${SYSTEM_PROMPT}
+    restart: always
