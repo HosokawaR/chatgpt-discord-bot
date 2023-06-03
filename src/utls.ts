@@ -1,4 +1,4 @@
-import { ClientUser, TextChannel } from "discord.js";
+import { TextChannel } from "discord.js";
 import { MessageWithRole } from "./chatgpt.js";
 import { CONSIDERD_CHAR_LIMIT, CONSIDERD_MESSAGES_LIMIT } from "./env.js";
 
@@ -8,7 +8,6 @@ export class MessageTooLongError extends Error {
 
 export const getRecentLimitedMessages = async (
 	channel: TextChannel,
-	botUser: ClientUser,
 ): Promise<MessageWithRole[] | MessageTooLongError> => {
 	const recentMessages = await channel.messages.fetch({
 		limit: CONSIDERD_MESSAGES_LIMIT,
@@ -20,12 +19,11 @@ export const getRecentLimitedMessages = async (
 				0,
 			);
 			if (total_char_count < CONSIDERD_CHAR_LIMIT) {
-				const roleName =
-					message.member.id === botUser.id
-						? "You"
-						: message.member?.displayName || "unknown";
+				const roleName = message.author.bot
+					? "You"
+					: message.author.username || "unknown";
 				acc.push({
-					message: message.content,
+					message: message.cleanContent,
 					role: roleName,
 				});
 			}
@@ -41,6 +39,7 @@ export const getRecentLimitedMessages = async (
 	}
 
 	const reversedMessages = limitedMessages.reverse();
+
 	const messageWithoutSystemMessage = reversedMessages.map((message) => {
 		return {
 			message: removeSystemMessage(message.message),
@@ -68,6 +67,7 @@ export class TypingSender {
 	}
 
 	async start() {
+		await this.channel.sendTyping();
 		this.interval = setInterval(async () => {
 			await this.channel.sendTyping();
 		}, this.intervalTime);

@@ -8,7 +8,7 @@ import {
 import { talkToChatgpt } from "./chatgpt.js";
 
 const client = new Client({
-	intents: ["Guilds", "GuildMessages", "MessageContent"],
+	intents: ["Guilds", "GuildMessages", "MessageContent", "GuildMembers"],
 });
 
 client.on("ready", () => {
@@ -24,10 +24,7 @@ client.on("messageCreate", async (message: Message) => {
 	if (message.mentions.users.has(client.user?.id)) {
 		const typingSender = new TypingSender(message.channel);
 		await typingSender.start();
-		const contexts = await getRecentLimitedMessages(
-			message.channel,
-			client.user,
-		);
+		const contexts = await getRecentLimitedMessages(message.channel);
 		if (contexts instanceof MessageTooLongError) {
 			message.channel.send(contexts.message);
 			return;
