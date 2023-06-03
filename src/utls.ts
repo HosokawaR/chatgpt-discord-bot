@@ -1,8 +1,6 @@
 import { ClientUser, TextChannel } from "discord.js";
 import { MessageWithRole } from "./chatgpt.js";
-
-const CONSIDERD_MESSAGES_LIMIT = 10;
-const CONSIDERD_CHAR_LIMIT = 1000;
+import { CONSIDERD_CHAR_LIMIT, CONSIDERD_MESSAGES_LIMIT } from "./env.js";
 
 export class MessageTooLongError extends Error {
 	readonly name = "MessageTooLongError";

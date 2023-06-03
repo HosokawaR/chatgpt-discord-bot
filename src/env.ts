@@ -18,6 +18,11 @@ const CURRENCY_UNIT = process.env.CURRENCY_UNIT || "USD";
 const SYSTEM_PROMPT =
 	process.env.SYSTEM_PROMPT || "Reply to the following message:";
 
+const CONSIDERD_MESSAGES_LIMIT =
+	Number(process.env.CONSIDERD_MESSAGES_LIMIT) || 30;
+
+const CONSIDERD_CHAR_LIMIT = Number(process.env.CONSIDERD_CHAR_LIMIT) || 1000;
+
 export {
 	CURRENCY_UNIT,
 	DISCORD_TOKEN,
@@ -27,4 +32,6 @@ export {
 	OPENAI_API_KEY,
 	SYSTEM_PROMPT,
 	TOKEN_UNIT_PRICE,
+	CONSIDERD_CHAR_LIMIT,
+	CONSIDERD_MESSAGES_LIMIT,
 };
