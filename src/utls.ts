@@ -15,7 +15,11 @@ export const getRecentLimitedMessages = async (
 	});
 	const limitedMessages = recentMessages.reduce(
 		(acc: MessageWithRole[], message) => {
-			if (message.content.length < CONSIDERD_CHAR_LIMIT) {
+			const total_char_count = acc.reduce(
+				(acc, message) => acc + message.message.length,
+				0,
+			);
+			if (total_char_count < CONSIDERD_CHAR_LIMIT) {
 				const roleName =
 					message.member.id === botUser.id
 						? "You"
