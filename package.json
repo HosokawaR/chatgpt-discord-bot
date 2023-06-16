@@ -7,14 +7,13 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/main.js",
-    "format:fix":"rome format . --write"
+    "format:fix": "rome format . --write"
   },
   "author": "HosokawaR <r@hosokawa.dev>",
   "license": "MIT",
   "dependencies": {
-    "chatgpt": "^5.2.5",
     "discord.js": "^14.11.0",
-    "openai": "^3.2.1",
+    "openai": "^3.3.0",
     "typescript": "^5.0.4"
   },
   "volta": {

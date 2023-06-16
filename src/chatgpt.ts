@@ -1,41 +1,42 @@
-import { ChatGPTAPI } from "chatgpt";
 import {
 	CURRENCY_UNIT,
 	EXCHANGE_RATE,
 	MAX_TOKENS,
 	MODEL,
 	OPENAI_API_KEY,
-	SYSTEM_PROMPT,
 	TOKEN_UNIT_PRICE,
 } from "./env.js";
 import { addSystemMessage } from "./utls.js";
+import { Configuration, OpenAIApi } from "openai";
 
-export type MessageWithRole = {
+export type Contexts = {
 	message: string;
-	role: string;
+	role: "user" | "system";
+	name: string;
 };
 
-const chatgpt = new ChatGPTAPI({
+const configuration = new Configuration({
 	apiKey: OPENAI_API_KEY,
-	completionParams: {
-		model: MODEL,
-		max_tokens: MAX_TOKENS,
-	},
 });
 
-export const talkToChatgpt = async (
-	contexts: MessageWithRole[],
-): Promise<string> => {
-	const context = contexts
-		.map((context) => {
-			return `${context.role}: ${context.message}`;
-		})
-		.join("\n");
-	const message = `${SYSTEM_PROMPT}\n${context}\nYou:`;
-	const response = await chatgpt.sendMessage(message, {
-		timeoutMs: 60 * 1000,
+const openai = new OpenAIApi(configuration);
+
+export const talkToChatgpt = async (contexts: Contexts[]): Promise<string> => {
+	const messages = contexts.map((context) => ({
+		role: context.role,
+		content: context.message,
+		name: context.name,
+	}));
+	const response = await openai.createChatCompletion({
+		model: MODEL,
+		max_tokens: MAX_TOKENS,
+		messages,
 	});
-	return addCostToMessage(response.text, response.detail.usage.total_tokens);
+	const replyWithCost = addCostToMessage(
+		response.data.choices[0].message.content,
+		response.data.usage.total_tokens,
+	);
+	return replyWithCost;
 };
 
 const addCostToMessage = (message: string, tokenAmount: number): string => {
