@@ -1,17 +1,24 @@
 import {
+	CONSIDERD_CHAR_LIMIT,
 	CURRENCY_UNIT,
 	EXCHANGE_RATE,
-	MAX_TOKENS,
 	MODEL,
 	OPENAI_API_KEY,
+	SYSTEM_PROMPT,
 	TOKEN_UNIT_PRICE,
 } from "./env.js";
+import { search } from "./search.js";
 import { addSystemMessage } from "./utls.js";
-import { Configuration, OpenAIApi } from "openai";
+import {
+	ChatCompletionFunctions,
+	ChatCompletionRequestMessage,
+	Configuration,
+	OpenAIApi,
+} from "openai";
 
 export type Contexts = {
-	message: string;
-	role: "user" | "system";
+	content: string;
+	role: "user" | "assistant";
 	name: string;
 };
 
@@ -21,22 +28,85 @@ const configuration = new Configuration({
 
 const openai = new OpenAIApi(configuration);
 
+const REQUEST_TIMEOUT = 60 * 1000; // (ms)
+
 export const talkToChatgpt = async (contexts: Contexts[]): Promise<string> => {
-	const messages = contexts.map((context) => ({
-		role: context.role,
-		content: context.message,
-		name: context.name,
-	}));
-	const response = await openai.createChatCompletion({
-		model: MODEL,
-		max_tokens: MAX_TOKENS,
-		messages,
-	});
-	const replyWithCost = addCostToMessage(
-		response.data.choices[0].message.content,
-		response.data.usage.total_tokens,
+	let totalTokens = 0;
+
+	const response = await openai.createChatCompletion(
+		{
+			model: MODEL,
+			messages: adaptMessages(contexts),
+			functions,
+			function_call: "auto",
+		},
+		{
+			timeout: REQUEST_TIMEOUT,
+		},
 	);
-	return replyWithCost;
+	const message = response.data.choices[0].message;
+	totalTokens += response.data.usage.total_tokens;
+
+	if (!message.function_call) {
+		const replyWithCost = addCostToMessage(message.content, totalTokens);
+		return replyWithCost;
+	}
+
+	const functionName = message.function_call.name;
+	const parameters = JSON.parse(message.function_call.arguments);
+	const searchResult = await searchOnGoogle(parameters["search_term"]);
+
+	const secondResponse = await openai.createChatCompletion(
+		{
+			model: MODEL,
+			messages: adaptMessages([
+				...contexts,
+				message,
+				{
+					role: "function",
+					name: functionName,
+					content: searchResult,
+				},
+			]),
+		},
+		{
+			timeout: REQUEST_TIMEOUT,
+		},
+	);
+	totalTokens += secondResponse.data.usage.total_tokens;
+
+	const replyWithCost = addCostToMessage(
+		secondResponse.data.choices[0].message.content,
+		totalTokens,
+	);
+	console.log(replyWithCost);
+	// Discord does not support markdown link
+	const replyWithCostWithoutMarkdownLink = replyWithCost.replace(
+		/\[([^\]]+)\]\(([^)]+)\)/g,
+		"$2",
+	);
+	return replyWithCostWithoutMarkdownLink;
+};
+
+const adaptMessages = (
+	contexts: ChatCompletionRequestMessage[],
+): ChatCompletionRequestMessage[] => {
+	const limitedRecentContexts = contexts.reduceRight((acc, cur) => {
+		if (acc.length >= CONSIDERD_CHAR_LIMIT) return acc;
+		acc.unshift(cur);
+		return acc;
+	}, [] as ChatCompletionRequestMessage[]);
+
+	const messages: ChatCompletionRequestMessage[] = [
+		{
+			role: "system",
+			name: "system",
+			content: SYSTEM_PROMPT,
+		},
+		...limitedRecentContexts,
+	];
+
+	return messages;
 };
 
 const addCostToMessage = (message: string, tokenAmount: number): string => {
@@ -46,4 +116,24 @@ const addCostToMessage = (message: string, tokenAmount: number): string => {
 		4,
 	)} ${CURRENCY_UNIT})`;
 	return addSystemMessage(message, costDisplay);
+};
+
+const functions: ChatCompletionFunctions[] = [
+	{
+		name: "search_on_google",
+		description: "Search on google and fetch the first result page content",
+		parameters: {
+			type: "object",
+			properties: {
+				search_term: {
+					type: "string",
+					description: "The search term to search on google",
+				},
+			},
+		},
+	},
+];
+
+const searchOnGoogle = async (searchTerm: string): Promise<string> => {
+	return await search(searchTerm);
 };
