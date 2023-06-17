@@ -83,7 +83,7 @@ export const talkToChatgpt = async (contexts: Contexts[]): Promise<string> => {
 	// Discord does not support markdown link
 	const replyWithCostWithoutMarkdownLink = replyWithCost.replace(
 		/\[([^\]]+)\]\(([^)]+)\)/g,
-		"$2",
+		" $2 ",
 	);
 	return replyWithCostWithoutMarkdownLink;
 };
