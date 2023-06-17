@@ -1,10 +1,6 @@
 import { Client, Message, TextChannel } from "discord.js";
 import { DISCORD_TOKEN } from "./env.js";
-import {
-	getRecentLimitedMessages,
-	MessageTooLongError,
-	TypingSender,
-} from "./utls.js";
+import { getRecentLimitedMessages, TypingSender } from "./utls.js";
 import { talkToChatgpt } from "./chatgpt.js";
 
 const client = new Client({
@@ -24,15 +20,18 @@ client.on("messageCreate", async (message: Message) => {
 	if (message.mentions.users.has(client.user?.id)) {
 		const typingSender = new TypingSender(message.channel);
 		await typingSender.start();
+
 		const contexts = await getRecentLimitedMessages(message.channel);
-		if (contexts instanceof MessageTooLongError) {
-			message.channel.send(contexts.message);
-			return;
+
+		try {
+			const response = await talkToChatgpt(contexts);
+			message.channel.send(response);
+		} catch (error) {
+			message.channel.send(
+				`OpenAI API Error\n${error.response.data.error.message}`,
+			);
+		} finally {
+			typingSender.stop();
 		}
-		const response = await talkToChatgpt(contexts);
-		typingSender.stop();
-		message.channel.send(response);
 	}
 });
-
-client.login(process.env.DISCORD_TOKEN);

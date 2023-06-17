@@ -20,3 +20,4 @@ Example
 
 - Can display costs consumed
 - Contextualized conversation as it takes into account the most recent message
+- Can make the bot search on Google
