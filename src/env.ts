@@ -18,7 +18,7 @@ const SYSTEM_PROMPT =
 	"When searching, please specify the URL of the page you referred to.";
 
 const CONSIDERD_MESSAGES_LIMIT =
-	Number(process.env.CONSIDERD_MESSAGES_LIMIT) || 5;
+	Number(process.env.CONSIDERD_MESSAGES_LIMIT) || 10;
 
 const CONSIDERD_CHAR_LIMIT = Number(process.env.CONSIDERD_CHAR_LIMIT) || 2000;
 
