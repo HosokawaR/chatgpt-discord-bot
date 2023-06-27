@@ -13,6 +13,8 @@ client.on("ready", () => {
 
 client.login(DISCORD_TOKEN);
 
+const ENABLE_SEARCH_WORDS = ["検索", "調べて", "search", "google"];
+
 client.on("messageCreate", async (message: Message) => {
 	if (message.author.bot) return;
 	if (!(message.channel instanceof TextChannel)) return;
@@ -23,11 +25,18 @@ client.on("messageCreate", async (message: Message) => {
 
 		const contexts = await getRecentLimitedMessages(message.channel);
 
+		// WORKAROUND
+		// Because OpenAI's API frequently returns 500 status when including search results
+		// allow to explicitly enable search
+		const useSearch = ENABLE_SEARCH_WORDS.some((word) =>
+			message.content.includes(word),
+		);
+
 		let retryingMessage: Message | undefined = undefined;
 
 		await retry(
 			async () => {
-				const response = await talkToChatgpt(contexts);
+				const response = await talkToChatgpt(contexts, useSearch);
 				message.channel.send(response);
 			},
 			async (error, attemptsCount) => {
@@ -44,9 +53,8 @@ client.on("messageCreate", async (message: Message) => {
 					}
 					return true;
 				}
-				message.channel.send(
-					`OpenAI API Error\n${error.response.data.error.message}`,
-				);
+				const errorMessage = error?.response?.data?.error?.message;
+				message.channel.send(`OpenAI API Error\n${errorMessage ?? ""}`);
 				return false;
 			},
 			async (error) => {

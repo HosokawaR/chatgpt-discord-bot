@@ -30,15 +30,19 @@ const openai = new OpenAIApi(configuration);
 
 const REQUEST_TIMEOUT = 60 * 1000; // (ms)
 
-export const talkToChatgpt = async (contexts: Contexts[]): Promise<string> => {
+export const talkToChatgpt = async (
+	contexts: Contexts[],
+	useSearch: boolean,
+): Promise<string> => {
 	let totalTokens = 0;
 
 	const response = await openai.createChatCompletion(
 		{
-			model: MODEL,
+			// Use 16k model to include large number of characters in search results
+			model: useSearch ? "gpt-3.5-turbo-16k-0613" : "gpt-3.5-turbo-0613",
 			messages: adaptMessages(contexts),
 			functions,
-			function_call: "auto",
+			function_call: useSearch ? "auto" : "none",
 		},
 		{
 			timeout: REQUEST_TIMEOUT,
