@@ -4,7 +4,10 @@ if (!OPENAI_API_KEY) throw new Error("OPENAI_API_KEY is not defined");
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN as string;
 if (!DISCORD_TOKEN) throw new Error("DISCORD_TOKEN is not defined");
 
+// Use 16k model to include large number of characters in search results
 const MODEL = process.env.MODEL || "gpt-3.5-turbo-16k-0613";
+const MODEL_FOR_SEARCH =
+	process.env.MODEL_FOR_SEARCH || "gpt-3.5-turbo-16k-0613";
 
 //Ref: https://openai.com/pricing
 const TOKEN_UNIT_PRICE = Number(process.env.TOKEN_UNIT_PRICE) || 0.003 / 1000;
@@ -31,6 +34,7 @@ export {
 	DISCORD_TOKEN,
 	EXCHANGE_RATE,
 	MODEL,
+	MODEL_FOR_SEARCH,
 	OPENAI_API_KEY,
 	SYSTEM_PROMPT,
 	TOKEN_UNIT_PRICE,

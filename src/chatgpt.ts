@@ -3,6 +3,7 @@ import {
 	CURRENCY_UNIT,
 	EXCHANGE_RATE,
 	MODEL,
+	MODEL_FOR_SEARCH,
 	OPENAI_API_KEY,
 	SYSTEM_PROMPT,
 	TOKEN_UNIT_PRICE,
@@ -35,11 +36,9 @@ export const talkToChatgpt = async (
 	useSearch: boolean,
 ): Promise<string> => {
 	let totalTokens = 0;
-
 	const response = await openai.createChatCompletion(
 		{
-			// Use 16k model to include large number of characters in search results
-			model: useSearch ? "gpt-3.5-turbo-16k-0613" : "gpt-3.5-turbo-0613",
+			model: useSearch ? MODEL_FOR_SEARCH : MODEL,
 			messages: adaptMessages(contexts),
 			functions,
 			function_call: useSearch ? "auto" : "none",
