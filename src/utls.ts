@@ -25,7 +25,7 @@ export const getRecentLimitedMessages = async (
 
 const extractValidCharAsName = (name: string): string => {
 	// Ref: https://platform.openai.com/docs/api-reference/chat/create#chat/create-name
-	return name.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 64) ?? "unknown";
+	return name.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 64) || "unknown";
 };
 
 export const addSystemMessage = (messaeg: string, cost: string): string => {
