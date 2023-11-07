@@ -17,6 +17,7 @@ import {
 	OpenAIApi,
 } from "openai";
 
+
 export type Contexts = {
 	content: string;
 	role: "user" | "assistant";

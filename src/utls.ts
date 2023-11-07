@@ -15,7 +15,7 @@ export const getRecentLimitedMessages = async (
 		(message) => {
 			return {
 				role: message.author.bot ? "assistant" : "user",
-				name: extractValidCharAsName(message.author.globalName),
+				name: extractValidCharAsName(message.author.globalName ?? message.author.username),
 				content: removeSystemMessage(message.content),
 			};
 		},
@@ -23,9 +23,9 @@ export const getRecentLimitedMessages = async (
 	return messageWithoutSystemMessage;
 };
 
-const extractValidCharAsName = (name: string): string => {
+const extractValidCharAsName = (name: string | undefined): string => {
 	// Ref: https://platform.openai.com/docs/api-reference/chat/create#chat/create-name
-	return name.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 64) || "unknown";
+	return name?.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 64) || "unknown";
 };
 
 export const addSystemMessage = (messaeg: string, cost: string): string => {
