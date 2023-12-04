@@ -15,7 +15,9 @@ export const getRecentLimitedMessages = async (
 		(message) => {
 			return {
 				role: message.author.bot ? "assistant" : "user",
-				name: extractValidCharAsName(message.author.globalName ?? message.author.username),
+				name: extractValidCharAsName(
+					message.author.globalName ?? message.author.username,
+				),
 				content: removeSystemMessage(message.content),
 			};
 		},

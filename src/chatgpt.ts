@@ -17,7 +17,6 @@ import {
 	OpenAIApi,
 } from "openai";
 
-
 export type Contexts = {
 	content: string;
 	role: "user" | "assistant";
@@ -58,7 +57,9 @@ export const talkToChatgpt = async (
 
 	const functionName = message.function_call.name;
 	const parameters = JSON.parse(message.function_call.arguments);
-	const searchResult = await searchOnGoogle(parameters["search_term"]);
+	const searchResult = await searchOnGoogle(parameters["search_term"]).catch(
+		(e) => `ERROR: ${e.message}`,
+	);
 
 	const secondResponse = await openai.createChatCompletion(
 		{
@@ -83,7 +84,6 @@ export const talkToChatgpt = async (
 		secondResponse.data.choices[0].message.content,
 		totalTokens,
 	);
-	console.log(replyWithCost);
 	// Discord does not support markdown link
 	const replyWithCostWithoutMarkdownLink = replyWithCost.replace(
 		/\[([^\]]+)\]\(([^)]+)\)/g,
@@ -95,11 +95,11 @@ export const talkToChatgpt = async (
 const adaptMessages = (
 	contexts: ChatCompletionRequestMessage[],
 ): ChatCompletionRequestMessage[] => {
-	const limitedRecentContexts = contexts.reduceRight((acc, cur) => {
+	const limitedRecentContexts = contexts.reduceRight<ChatCompletionRequestMessage[]>((acc, cur) => {
 		if (acc.length >= CONSIDERD_CHAR_LIMIT) return acc;
 		acc.unshift(cur);
 		return acc;
-	}, [] as ChatCompletionRequestMessage[]);
+	}, []);
 
 	const messages: ChatCompletionRequestMessage[] = [
 		{
