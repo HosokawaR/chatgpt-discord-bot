@@ -18,14 +18,18 @@
 Example  
 ![image](https://github.com/HosokawaR/chatgpt-discord-bot/assets/45098934/68ec4969-8552-4dc5-8845-b7290e526299)
 
-### Enable Google Search
+### Web Search
 
-1. You need to get a Google Custom Search API key and a search engine ID.
-  1. See https://developers.google.com/custom-search/v1/overview for more information.
-2. Set `GCP_SEARCH_API_KEY` and `GOOGLE_CUSTOM_SEARCH_CX` in .env.
+The bot now uses OpenAI's native web search capabilities. OpenAI's API automatically determines when web search is needed for answering questions, providing up-to-date information when relevant.
+
+You can configure web search behavior with this optional environment variable:
+- `SEARCH_CONTEXT_SIZE`: Controls how much context is retrieved from the web. Available values:
+  - `high`: Most comprehensive context, highest cost, slower response
+  - `medium` (default): Balanced context, cost, and latency
+  - `low`: Least context, lowest cost, fastest response
 
 ## Features
 
 - Can display costs consumed
 - Contextualized conversation as it takes into account the most recent message
-- Can make the bot search on Google
+- Can search the web using OpenAI's native search capabilities

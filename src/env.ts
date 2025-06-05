@@ -4,13 +4,11 @@ if (!OPENAI_API_KEY) throw new Error("OPENAI_API_KEY is not defined");
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN as string;
 if (!DISCORD_TOKEN) throw new Error("DISCORD_TOKEN is not defined");
 
-// Use 16k model to include large number of characters in search results
-const MODEL = process.env.MODEL || "gpt-3.5-turbo-16k-0613";
-const MODEL_FOR_SEARCH =
-	process.env.MODEL_FOR_SEARCH || "gpt-3.5-turbo-16k-0613";
+const MODEL = process.env.MODEL || "gpt-4o";
 
 //Ref: https://openai.com/pricing
-const TOKEN_UNIT_PRICE = Number(process.env.TOKEN_UNIT_PRICE) || 0.003 / 1000;
+const INPUT_TOKEN_PRICE_PER_1M = Number(process.env.INPUT_TOKEN_PRICE_PER_1M) || 2.5;
+const OUTPUT_TOKEN_PRICE_PER_1M = Number(process.env.OUTPUT_TOKEN_PRICE_PER_1M) || 10.0;
 
 const EXCHANGE_RATE = Number(process.env.EXCHANGE_RATE) || 1;
 
@@ -18,28 +16,26 @@ const CURRENCY_UNIT = process.env.CURRENCY_UNIT || "USD";
 
 const SYSTEM_PROMPT =
 	process.env.SYSTEM_PROMPT ||
-	"When searching, please specify the URL of the page you referred to.";
+	"You are a helpful assistant.";
 
 const CONSIDERD_MESSAGES_LIMIT =
 	Number(process.env.CONSIDERD_MESSAGES_LIMIT) || 20;
 
 const CONSIDERD_CHAR_LIMIT = Number(process.env.CONSIDERD_CHAR_LIMIT) || 2000;
 
-const GCP_SEARCH_API_KEY = process.env.GCP_SEARCH_API_KEY;
-
-const GOOGLE_CUSTOM_SEARCH_CX = process.env.GOOGLE_CUSTOM_SEARCH_CX;
+// high, medium, low
+const SEARCH_CONTEXT_SIZE = process.env.SEARCH_CONTEXT_SIZE || "medium"; 
 
 export {
 	CURRENCY_UNIT,
 	DISCORD_TOKEN,
 	EXCHANGE_RATE,
 	MODEL,
-	MODEL_FOR_SEARCH,
 	OPENAI_API_KEY,
 	SYSTEM_PROMPT,
-	TOKEN_UNIT_PRICE,
+	INPUT_TOKEN_PRICE_PER_1M,
+	OUTPUT_TOKEN_PRICE_PER_1M,
 	CONSIDERD_CHAR_LIMIT,
 	CONSIDERD_MESSAGES_LIMIT,
-	GCP_SEARCH_API_KEY,
-	GOOGLE_CUSTOM_SEARCH_CX,
+	SEARCH_CONTEXT_SIZE,
 };

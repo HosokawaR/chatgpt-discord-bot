@@ -12,12 +12,9 @@
   "author": "HosokawaR <r@hosokawa.dev>",
   "license": "MIT",
   "dependencies": {
-    "@types/jsdom": "^21.1.1",
-    "axios": "^1.4.0",
     "chatgpt": "^5.2.5",
     "discord.js": "^14.11.0",
-    "jsdom": "^22.1.0",
-    "openai": "^3.3.0",
+    "openai": "^5.8.2",
     "typescript": "^5.0.4"
   },
   "volta": {
