@@ -3,19 +3,14 @@ import {
 	CURRENCY_UNIT,
 	EXCHANGE_RATE,
 	MODEL,
-	MODEL_FOR_SEARCH,
 	OPENAI_API_KEY,
 	SYSTEM_PROMPT,
-	TOKEN_UNIT_PRICE,
+	INPUT_TOKEN_PRICE_PER_1M,
+	OUTPUT_TOKEN_PRICE_PER_1M,
+	SEARCH_CONTEXT_SIZE,
 } from "./env.js";
-import { search } from "./search.js";
 import { addSystemMessage } from "./utls.js";
-import {
-	ChatCompletionFunctions,
-	ChatCompletionRequestMessage,
-	Configuration,
-	OpenAIApi,
-} from "openai";
+import OpenAI from "openai";
 
 
 export type Contexts = {
@@ -24,66 +19,39 @@ export type Contexts = {
 	name: string;
 };
 
-const configuration = new Configuration({
+const openai = new OpenAI({
 	apiKey: OPENAI_API_KEY,
 });
-
-const openai = new OpenAIApi(configuration);
 
 const REQUEST_TIMEOUT = 60 * 1000; // (ms)
 
 export const talkToChatgpt = async (
 	contexts: Contexts[],
-	useSearch: boolean,
 ): Promise<string> => {
-	let totalTokens = 0;
-	const response = await openai.createChatCompletion(
-		{
-			model: useSearch ? MODEL_FOR_SEARCH : MODEL,
-			messages: adaptMessages(contexts),
-			functions,
-			function_call: useSearch ? "auto" : "none",
-		},
-		{
-			timeout: REQUEST_TIMEOUT,
-		},
-	);
-	const message = response.data.choices[0].message;
-	totalTokens += response.data.usage.total_tokens;
+	const messages = adaptMessages(contexts);
+	
+	// Use OpenAI's web search with configuration
+	const config: any = {
+		model: MODEL,
+		messages: messages,
+		web_search_options: {
+			search_context_size: SEARCH_CONTEXT_SIZE
+		}
+	};
 
-	if (!message.function_call) {
-		const replyWithCost = addCostToMessage(message.content, totalTokens);
-		return replyWithCost;
-	}
-
-	const functionName = message.function_call.name;
-	const parameters = JSON.parse(message.function_call.arguments);
-	const searchResult = await searchOnGoogle(parameters["search_term"]);
-
-	const secondResponse = await openai.createChatCompletion(
-		{
-			model: MODEL,
-			messages: adaptMessages([
-				...contexts,
-				message,
-				{
-					role: "function",
-					name: functionName,
-					content: searchResult,
-				},
-			]),
-		},
-		{
-			timeout: REQUEST_TIMEOUT,
-		},
-	);
-	totalTokens += secondResponse.data.usage.total_tokens;
-
+	const response = await openai.chat.completions.create(config, {
+		timeout: REQUEST_TIMEOUT,
+	});
+	console.log(JSON.stringify(response, null, 2));
+	
+	const inputTokens = response.usage?.prompt_tokens || 0;
+	const outputTokens = response.usage?.completion_tokens || 0;
+	
 	const replyWithCost = addCostToMessage(
-		secondResponse.data.choices[0].message.content,
-		totalTokens,
+		response.choices[0].message.content || "",
+		inputTokens,
+		outputTokens,
 	);
-	console.log(replyWithCost);
 	// Discord does not support markdown link
 	const replyWithCostWithoutMarkdownLink = replyWithCost.replace(
 		/\[([^\]]+)\]\(([^)]+)\)/g,
@@ -93,18 +61,17 @@ export const talkToChatgpt = async (
 };
 
 const adaptMessages = (
-	contexts: ChatCompletionRequestMessage[],
-): ChatCompletionRequestMessage[] => {
+	contexts: OpenAI.Chat.ChatCompletionMessageParam[],
+): OpenAI.Chat.ChatCompletionMessageParam[] => {
 	const limitedRecentContexts = contexts.reduceRight((acc, cur) => {
 		if (acc.length >= CONSIDERD_CHAR_LIMIT) return acc;
 		acc.unshift(cur);
 		return acc;
-	}, [] as ChatCompletionRequestMessage[]);
+	}, [] as OpenAI.Chat.ChatCompletionMessageParam[]);
 
-	const messages: ChatCompletionRequestMessage[] = [
+	const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
 		{
 			role: "system",
-			name: "system",
 			content: SYSTEM_PROMPT,
 		},
 		...limitedRecentContexts,
@@ -113,31 +80,14 @@ const adaptMessages = (
 	return messages;
 };
 
-const addCostToMessage = (message: string, tokenAmount: number): string => {
-	const dollerCost = tokenAmount * TOKEN_UNIT_PRICE;
-	const exchangedCost = dollerCost * EXCHANGE_RATE;
-	const costDisplay = `$${dollerCost.toFixed(4)} (${exchangedCost.toFixed(
-		4,
+const addCostToMessage = (message: string, inputTokens: number, outputTokens: number): string => {
+	const inputCost = (inputTokens / 1000000) * INPUT_TOKEN_PRICE_PER_1M;
+	const outputCost = (outputTokens / 1000000) * OUTPUT_TOKEN_PRICE_PER_1M;
+	const totalCost = inputCost + outputCost;
+	const exchangedCost = totalCost * EXCHANGE_RATE;
+	const costDisplay = `$${totalCost.toFixed(2)} (${exchangedCost.toFixed(
+		2,
 	)} ${CURRENCY_UNIT})`;
 	return addSystemMessage(message, costDisplay);
 };
 
-const functions: ChatCompletionFunctions[] = [
-	{
-		name: "search_on_google",
-		description: "Search on google and fetch the first result page content",
-		parameters: {
-			type: "object",
-			properties: {
-				search_term: {
-					type: "string",
-					description: "The search term to search on google",
-				},
-			},
-		},
-	},
-];
-
-const searchOnGoogle = async (searchTerm: string): Promise<string> => {
-	return await search(searchTerm);
-};
